@@ -31,23 +31,23 @@ float bird_y = 1;
 
 void keyPress(unsigned char key, int x, int y){
     if(key == 'w'){
-        jump += 75;
+        jump += 3;
     }
     else if(key == 'q'){
         exit(0);
     }
 }
 
-void idle(void){
+void timer(int value){
     if(jump){
-        bird_y += 0.005;
+        bird_y += 0.025;
         jump--;
     }
     else if(bird_y - bird_size > 0){
-        bird_y -= 0.001;
+        bird_y -= 0.005;
     }
     if(pipe_x + pipe_width > 0){
-        pipe_x -= 0.00025;
+        pipe_x -= 0.005;
     }
     else{
         pipe_x = 1;
@@ -60,53 +60,10 @@ void idle(void){
         }
         printf("New pipe_y1, pipe_y2: %.2f, %.2f\n", pipe_y1, pipe_y2);
     }
-    /*
-    if(keyStatus['a']){
-        bird_x -= 0.001;
-    }
-    if(keyStatus['s']){
-        bird_y -= 0.001;
-    }
-    if(keyStatus['w']){
-        bird_y += 0.001;
-    }
-    if(keyStatus['d']){
-        bird_x += 0.001;
-    }*/
     glutPostRedisplay();
+    glutTimerFunc(16, timer, 1);
 }
-/*
-void mouse(int button, int state, int x, int y){
-    y = WINDOW_SIZE_Y - y;
-    float px = (float)x / WINDOW_SIZE_X;
-    float py = (float)y / WINDOW_SIZE_Y;
-    
-    if(abs(px - bird_x) <= bird_size && abs(py - bird_y) <= bird_size){
-        inside = 1;
-        dragX = px;
-        dragY = py;
-    }
-    else{
-        inside = 0;
-    }
-    
-}
-*/
-/*
-void motion(int x, int y){
-    y = WINDOW_SIZE_Y - y;
 
-    float py = (float)y / WINDOW_SIZE_Y;
-    float px = (float)x / WINDOW_SIZE_X;
-
-    if(inside){
-        bird_x += (px - dragX);
-        bird_y += (py - dragY);
-        dragX = px;
-        dragY = py;
-    }
-}
-*/
 void display(void){
     /* Limpar todos os pixels  */
     glClear (GL_COLOR_BUFFER_BIT);
@@ -163,7 +120,8 @@ int main(int argc, char** argv){
 
     glutKeyboardFunc(keyPress);
     //glutKeyboardUpFunc(keyUp);
-    glutIdleFunc(idle);
+    glutTimerFunc(16, timer, 1);
+    //glutIdleFunc(idle);
     //glutMouseFunc(mouse);
     //glutMotionFunc(motion);
     glutMainLoop();
