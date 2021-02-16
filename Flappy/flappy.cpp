@@ -5,29 +5,20 @@
 
 #include <time.h>
 #include <stdlib.h>
+#include <math.h>
 
-#define WINDOW_SIZE_X 640
-#define WINDOW_SIZE_Y 480
+#include "bird.h"
+#include "pipe.h"
+#include "point.h"
 
-// Pipe x coordinate.
-float pipe_x = 0.75;
+#define WINDOW_SIZE_X 500
+#define WINDOW_SIZE_Y 500
 
-// Pipe width.
-float pipe_width = 0.1;
-
-// Pipe y1 and y2 coordinates.
-float pipe_y1 = 0.6;
-float pipe_y2 = 0.8;
+Bird bird = Bird(Point(0.1, 1), 0.03);
+Pipe pipe = Pipe(Point(0.75, 0.6), Point(0.75, 0.8), 0.1);
 
 // Jump
 int jump = 0;
-
-// Bird size.
-float bird_size = 0.03;
-
-// Centro do quadrado. 
-float bird_x = 0.1;
-float bird_y = 1;
 
 void keyPress(unsigned char key, int x, int y){
     if(key == 'w'){
@@ -40,25 +31,24 @@ void keyPress(unsigned char key, int x, int y){
 
 void timer(int value){
     if(jump){
-        bird_y += 0.025;
+        if(bird.center.y <= 1){
+            bird.center.y += 0.025;
+        }
         jump--;
     }
-    else if(bird_y - bird_size > 0){
-        bird_y -= 0.005;
+    else if(bird.center.y - bird.radius > 0){
+        bird.center.y -= 0.005;
     }
-    if(pipe_x + pipe_width > 0){
-        pipe_x -= 0.005;
+    if(pipe.bottom.x + pipe.width > 0){
+        pipe.bottom.x -= 0.005;
+        pipe.top.x -= 0.005;
     }
     else{
-        pipe_x = 1;
-        pipe_y1 = ((float) (rand() % 10)) / 10.0f;
-        pipe_y2 = ((float) (rand() % 10)) / 10.0f;
-        if(pipe_y1 > pipe_y2){
-            float aux = pipe_y1;
-            pipe_y1 = pipe_y2;
-            pipe_y2 = aux;
-        }
-        printf("New pipe_y1, pipe_y2: %.2f, %.2f\n", pipe_y1, pipe_y2);
+        pipe.change();
+    }
+
+    if(bird.collision(pipe)){
+        printf("Bird collided with pipe!\n");
     }
     glutPostRedisplay();
     glutTimerFunc(16, timer, 1);
@@ -68,41 +58,21 @@ void display(void){
     /* Limpar todos os pixels  */
     glClear (GL_COLOR_BUFFER_BIT);
 
-    /* Define cor dos vértices com os valores R, G e B variando de 0.0 a 1.0 */
-    glColor3f (128, 128, 0.4);
-    /* Desenhar um polígono branco (retângulo) */
-    glBegin(GL_POLYGON);
-        glVertex3f (bird_x - bird_size, bird_y - bird_size, 0.0);
-        glVertex3f (bird_x + bird_size, bird_y - bird_size, 0.0);
-        glVertex3f (bird_x + bird_size, bird_y + bird_size, 0.0);
-        glVertex3f (bird_x - bird_size, bird_y + bird_size, 0.0);
-    glEnd();
+    /* Desenhar o pássario. */
+    bird.draw();
 
-    glColor3f (0.0, 128.0, 0.0);
-    glBegin(GL_POLYGON);
-        glVertex3f (pipe_x, 0.0, 0.0);
-        glVertex3f (pipe_x + pipe_width, 0.0, 0.0);
-        glVertex3f (pipe_x + pipe_width, pipe_y1, 0.0);
-        glVertex3f (pipe_x, pipe_y1, 0.0);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-        glVertex3f (pipe_x, pipe_y2, 0.0);
-        glVertex3f (pipe_x + pipe_width, pipe_y2, 0.0);
-        glVertex3f (pipe_x + pipe_width, 1, 0.0);
-        glVertex3f (pipe_x, 1, 0.0);
-    glEnd();
-
+    /* Desenhar o tubo. */
+    pipe.draw();
 
     /* Desenhar no frame buffer! */
     glutSwapBuffers(); //Funcao apropriada para janela double buffer
 }
 
 void init (void){
-    /* selecionar cor de fundo (preto) */
+    /* Fundo azul. */
     glClearColor (66.0f/255.0f, 135.0f/255.0f, 245.0f/255.0f, 0.0);
 
-    /* inicializar sistema de visualizacao */
+    /* Inicializar sistema de visualização. */
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
