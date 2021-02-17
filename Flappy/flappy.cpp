@@ -17,12 +17,10 @@
 Bird bird = Bird(Point(0.1, 1), 0.03);
 Pipe pipe = Pipe(Point(0.75, 0.6), Point(0.75, 0.8), 0.1);
 
-// Jump
-int jump = 0;
-
 void keyPress(unsigned char key, int x, int y){
     if(key == 'w'){
-        jump += 3;
+        bird.jump += 3;
+        bird.jump_step = 0.025;
     }
     else if(key == 'q'){
         exit(0);
@@ -30,11 +28,12 @@ void keyPress(unsigned char key, int x, int y){
 }
 
 void timer(int value){
-    if(jump){
+    if(bird.jump){
         if(bird.center.y <= 1){
-            bird.center.y += 0.025;
+            bird.center.y += bird.jump_step;
+            bird.jump_step -= 0.006;
         }
-        jump--;
+        bird.jump--;
     }
     else if(bird.center.y - bird.radius > 0){
         bird.center.y -= 0.005;
@@ -42,6 +41,7 @@ void timer(int value){
     if(pipe.bottom.x + pipe.width > 0){
         pipe.bottom.x -= 0.005;
         pipe.top.x -= 0.005;
+        pipe.update_points();
     }
     else{
         pipe.change();
@@ -49,6 +49,7 @@ void timer(int value){
 
     if(bird.collision(pipe)){
         printf("Bird collided with pipe!\n");
+        exit(0);
     }
     glutPostRedisplay();
     glutTimerFunc(16, timer, 1);

@@ -23,5 +23,10 @@ void Bird::draw(void){
 }
 
 int Bird::collision(Pipe pipe){
+    for(int i = 0; i < PIPE_POINTS; i++){
+        if(center.distance(pipe.points[i]) < radius){
+            return 1;
+        }
+    }
     return center.distance(pipe.bottom) < radius || center.distance(pipe.top) < radius;
 }
