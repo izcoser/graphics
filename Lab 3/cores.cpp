@@ -91,12 +91,12 @@ void motion(int x, int y){
 
     // Encontrando a equação da reta B - Click:
     // y1 = mBClick * x + bBClick
-    float mBClick = (pBy - fY) / (pBx - fX);
+    float mBClick = pBx != fX ? (pBy - fY) / (pBx - fX) : 100.0;
     float bBClick = pBy - mBClick * pBx;
 
     // Encontrando a equação da reta R - G:
     // y2 = mRG * x + bRG
-    float mRG = (pRy - pGy) / (pRx - pGx);
+    float mRG = pRx != pGx ? (pRy - pGy) / (pRx - pGx) : 100.0;
     float bRG = pRy - mRG * pRx;
 
     // Encontrando o ponto de interseção:
