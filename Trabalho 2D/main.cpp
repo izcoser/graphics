@@ -54,10 +54,6 @@ void renderScene(void){
     player.draw();
     computer.draw();
 
-    if(player.punching()){
-        player.punch();
-    }
-
     if(player.hit(computer)){
         player_score++;
         player.retreat_punch();
@@ -141,27 +137,31 @@ void init(void){
 }
 
 void idle(void){
-    static GLdouble previousTime = glutGet(GLUT_ELAPSED_TIME);
-    GLdouble currentTime, timeDifference;
+    static GLdouble previous_time = glutGet(GLUT_ELAPSED_TIME);
+    GLdouble current_time, time_diff;
     //Pega o tempo que passou do inicio da aplicacao
-    currentTime = glutGet(GLUT_ELAPSED_TIME);
+    current_time = glutGet(GLUT_ELAPSED_TIME);
     // Calcula o tempo decorrido desde de a ultima frame.
-    timeDifference = currentTime - previousTime;
+    time_diff = current_time - previous_time;
     //Atualiza o tempo do ultimo frame ocorrido
-    previousTime = currentTime;
+    previous_time = current_time;
 
     double inc = INC_KEYIDLE;
     if(keyStatus[(int)('w')]){
-        player.move_y(inc, computer);
+        player.move_y(inc, computer, time_diff);
     }
     if(keyStatus[(int)('s')]){
-        player.move_y(-inc, computer);
+        player.move_y(-inc, computer, time_diff);
     }
     if(keyStatus[(int)('a')]){
-        player.rotate(inc);
+        player.rotate(inc, time_diff);
     }
     if(keyStatus[(int)('d')]){
-        player.rotate(-inc);
+        player.rotate(-inc, time_diff);
+    }
+
+    if(player.punching()){
+        player.punch(time_diff);
     }
     glutPostRedisplay();
 }

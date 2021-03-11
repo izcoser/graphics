@@ -76,15 +76,15 @@ public:
     void draw(){ 
         draw_player(p, left_alpha, left_beta, right_alpha, right_beta);
     };
-    void rotate(GLfloat inc);
-    void move_y(GLfloat dy, Player p2);
+    void rotate(GLfloat inc, GLdouble time_diff);
+    void move_y(GLfloat dy, Player p2, GLdouble time_diff);
     void change_forearm_angle(GLfloat dy);
     void change_arm_angle(GLfloat dy);
     void reset_angles(void);
     void begin_punch(void);
     int punching(void);
     void retreat_punch(void);
-    void punch(void);
+    void punch(GLdouble time_diff);
 
     Point get_left_hand_pos(void);
     Point get_right_hand_pos(void);

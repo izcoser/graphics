@@ -75,17 +75,17 @@ void Player::draw_player(Point p, GLfloat left_alpha, GLfloat left_beta, GLfloat
     
 }
 
-void Player::move_y(GLfloat dy, Player p2){
+void Player::move_y(GLfloat dy, Player p2, GLdouble time_diff){
     /* Converte theta para radianos e adiciona 90 graus. */
-    Point increment = Point(20*dy * cos(theta * 2 * M_PI / 360 + M_PI / 2), 20*dy * sin(theta * 2 * M_PI / 360 + M_PI / 2));
+    Point increment = Point(20*dy * cos(theta * 2 * M_PI / 360 + M_PI / 2) * time_diff, 20*dy * sin(theta * 2 * M_PI / 360 + M_PI / 2) * time_diff);
     GLfloat distance = p.sum(increment).distance(p2.get_pos());
     if(distance > radius * 3 + p2.get_radius() && distance > radius + p2.get_radius() * 3){
         p = p.sum(increment);
     }
 }
 
-void Player::rotate(GLfloat inc){
-    theta += 20*inc;
+void Player::rotate(GLfloat inc, GLdouble time_diff){
+    theta += 20* inc * time_diff;
 }
 
 void Player::change_forearm_angle(GLfloat dy){
@@ -117,21 +117,21 @@ void Player::retreat_punch(void){
     punch_status = 2;
 }
 
-void Player::punch(void){
+void Player::punch(GLdouble time_diff){
     /* punch */
     if(punch_status == 0){
         return;
     }
     else if(punch_status == 1){
-        left_alpha -= 1.45;
-        left_beta += 1;
+        left_alpha -= 1.45 * time_diff;
+        left_beta += 1 * time_diff;
         if(left_alpha <= 30 || left_beta >= -63){
             punch_status = 2;
         }
     }
     else if(punch_status == 2){
-        left_alpha += 1.45;
-        left_beta -= 1;
+        left_alpha += 1.45 * time_diff;
+        left_beta -= 1 * time_diff;
         if(left_alpha >= 135 || left_beta <= -135){
             punch_status = 0;
             reset_angles();
