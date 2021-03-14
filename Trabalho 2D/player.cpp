@@ -208,7 +208,19 @@ int Player::hit(Player p2){
     Point right_hand = get_right_hand_pos();
     Point p2_pos = p2.get_pos();
 
-    return left_hand.distance(p2_pos) <= hand_radius + p2.get_radius() || right_hand.distance(p2_pos) <= hand_radius + p2.get_radius(); 
+    return (left_hand.distance(p2_pos) <= hand_radius + p2.get_radius() || right_hand.distance(p2_pos) <= hand_radius + p2.get_radius()); 
+}
+
+void Player::disable_hit(void){
+    can_hit = 0;
+}
+
+void Player::enable_hit(void){
+    can_hit = 1;
+}
+
+int Player::hit_enabled(void){
+    return can_hit;
 }
 
 void Player::update_left_arm_angles(GLfloat left_alpha, GLfloat left_beta){

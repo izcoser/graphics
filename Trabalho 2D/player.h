@@ -38,6 +38,10 @@ class Player {
                             If 0, moving away. If 1, towards
                             player.
                             */
+
+    int can_hit;            /* A hit will only count if
+                            can_hit = 1. To stop hits from
+                            counting multiple times. */
                              
 private:
     void draw_rect(GLfloat height, GLfloat width, GLfloat R, GLfloat G, GLfloat B);
@@ -66,6 +70,7 @@ public:
         score = 0;
         won = 0;
         movement = 0;
+        can_hit = 1;
     }
 
     void draw(){ 
@@ -93,6 +98,9 @@ public:
     Point get_right_hand_pos(void);
 
     int hit(Player p2);
+    void disable_hit(void);
+    void enable_hit(void);
+    int hit_enabled(void);
 
     void update_left_arm_angles(GLfloat left_alpha, GLfloat left_beta);
     void update_right_arm_angles(GLfloat right_alpha, GLfloat right_beta);

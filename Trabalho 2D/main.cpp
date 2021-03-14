@@ -18,6 +18,8 @@ Player player;
 Player computer;
 
 int click_x;
+int computer_enabled = 1;
+
 
 static char str[1000];
 void * font = GLUT_BITMAP_9_BY_15;
@@ -46,7 +48,7 @@ void print_win_message(GLfloat x, GLfloat y){
     glRasterPos2f(x, y);
     tmpStr = str;
     while( *tmpStr ){
-    glutBitmapCharacter(font, *tmpStr);
+    glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *tmpStr);
     tmpStr++;
     }
 }
@@ -92,6 +94,12 @@ void keyPress(unsigned char key, int x, int y){
             break;
         case '1':
             computer.change_movement();
+            break;
+        case '2':
+            computer_enabled = !computer_enabled;
+            break;
+        case 'q':
+            exit(0);
     }
     glutPostRedisplay();
 }
@@ -144,7 +152,16 @@ void init(void){
     glLoadIdentity();
 }
 
+int game_ended(void){
+    return player.get_score() >= 10 || computer.get_score() >= 10;
+}
+
 void idle(void){
+    if(game_ended()){
+        return;
+    }
+
+
     static GLdouble previous_time = glutGet(GLUT_ELAPSED_TIME);
     static GLdouble computer_timer = 0;
     GLdouble current_time, time_diff;
@@ -172,37 +189,47 @@ void idle(void){
         player.rotate(-inc, time_diff);
     }
 
-    if(computer.moving_towards_player()){
+    if(computer_enabled){
+        if(computer.moving_towards_player()){
         computer.move(inc, player, time_diff, rect_width, rect_height);
-        if(!computer.punching() && computer.get_pos().distance(player.get_pos()) <= 3 * computer.get_radius() + 1.5 * player.get_radius()){
-            if(rand() % 2){
-                computer.begin_left_punch();
-            }
-            else{
-                computer.begin_right_punch();
+            if(!computer.punching() && computer.get_pos().distance(player.get_pos()) <= 3 * computer.get_radius() + 1.5 * player.get_radius()){
+                if(rand() % 2){
+                    computer.begin_left_punch();
+                }
+                else{
+                    computer.begin_right_punch();
+                }
             }
         }
+        else{
+            computer.move(-inc, player, time_diff, rect_width, rect_height);
+        }
     }
-    else{
-        computer.move(-inc, player, time_diff, rect_width, rect_height);
-    }
-
-    if(player.punching()){
-        player.punch(time_diff);
-    }
-
+    
     if(computer.punching()){
         computer.punch(time_diff);
     }
 
     if(player.hit(computer)){
-        player.increase_score();
-        player.retreat_punch(); /* modify to retreat according to the arm that hit */
+        if(player.hit_enabled()){
+            player.increase_score();
+            player.disable_hit();
+            player.retreat_punch();
+        }
+    }
+    else{
+        player.enable_hit();
     }
 
     if(computer.hit(player)){
-        computer.increase_score();
-        computer.retreat_punch(); /* modify to retreat according to the arm that hit */
+        if(computer.hit_enabled()){
+            computer.increase_score();
+            computer.disable_hit();
+            computer.retreat_punch();
+        }
+    }
+    else{
+        computer.enable_hit();
     }
 
     if(player.get_score() >= 10){
