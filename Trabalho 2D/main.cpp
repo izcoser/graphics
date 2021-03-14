@@ -3,13 +3,21 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
+#include <time.h>
+
+#include "string.h"
+#include "math.h"
 #include "tinyxml2.h"
 #include "player.h"
 #define INC_KEY 1
 #define INC_KEYIDLE 0.01
 
-int player_score = 0;
-int computer_score = 0;
+#define min(a,b) ((a) < (b) ? (a) : (b))
+
+Player player;
+Player computer;
+
+int click_x;
 
 static char str[1000];
 void * font = GLUT_BITMAP_9_BY_15;
@@ -17,7 +25,24 @@ void * font = GLUT_BITMAP_9_BY_15;
 void print_score(GLfloat x, GLfloat y){
     glColor3f(1.0, 1.0, 1.0);
     char *tmpStr;
-    sprintf(str, "Player %d x %d Computer", player_score, computer_score);
+    sprintf(str, "Jogador %d x %d Computador", player.get_score(), computer.get_score());
+    glRasterPos2f(x, y);
+    tmpStr = str;
+    while( *tmpStr ){
+    glutBitmapCharacter(font, *tmpStr);
+    tmpStr++;
+    }
+}
+
+void print_win_message(GLfloat x, GLfloat y){
+    glColor3f(1.0, 1.0, 1.0);
+    char *tmpStr;
+    if(player.winner()){
+        sprintf(str, "Voce venceu por %d x %d!", player.get_score(), computer.get_score());    
+    }
+    else{
+        sprintf(str, "Voce perdeu por %d x %d!", player.get_score(), computer.get_score());
+    }
     glRasterPos2f(x, y);
     tmpStr = str;
     while( *tmpStr ){
@@ -28,52 +53,22 @@ void print_score(GLfloat x, GLfloat y){
 
 GLfloat inc = 1;
 
-int circle_1_x = 175;
-int circle_1_y = 175;
-int circle_1_r = 30;
-
-int circle_2_x = -175;
-int circle_2_y = -175;
-int circle_2_r = 15;
-Player player = Player(Point(circle_1_x, circle_1_y), circle_1_r, 1, 1, 0);
-Player computer = Player(Point(circle_2_x, circle_2_y), circle_2_r, 1, 0, 1);
 //Key status
 int keyStatus[256] = {0};
 
 // Window dimensions
-const GLint Width = 700;
-const GLint Height = 700;
-
-// Viewing dimensions
-const GLint ViewingWidth = 500;
-const GLint ViewingHeight = 500;
+GLint rect_width;
+GLint rect_height;
 
 void renderScene(void){
-    // Clear the screen.
     glClear(GL_COLOR_BUFFER_BIT);
     player.draw();
     computer.draw();
+    print_score(2, 2);
 
-    if(player.hit(computer)){
-        player_score++;
-        player.retreat_punch();
+    if(player.winner() || computer.winner()){
+        print_win_message(rect_width / 2 - 80, rect_height / 2);
     }
-
-    if(computer.hit(player)){
-        computer_score++;
-        computer.retreat_punch();
-    }
-
-    Point pleft = player.get_left_hand_pos();
-    Point pright = player.get_right_hand_pos();
-    glColor3f(0, 0, 0);
-    glPointSize(5);
-    glBegin(GL_POINTS);
-        glVertex3f(pleft.x, pleft.y, 0);
-        glVertex3f(pright.x, pright.y, 0);
-    glEnd();
-
-    print_score(-ViewingHeight / 2 + 2, - ViewingWidth / 2 + 2);
     glutSwapBuffers(); // Desenha the new frame of the game.
 }
 
@@ -95,23 +90,8 @@ void keyPress(unsigned char key, int x, int y){
         case 'W':
             keyStatus[(int)('w')] = 1;
             break;
-        case 'f':
-            player.change_forearm_angle(INC_KEY);
-            break;
-        case 'g':
-            player.change_forearm_angle(-INC_KEY);
-            break;
-        case 'c':
-            player.change_arm_angle(INC_KEY);
-            break;
-        case 'v':
-            player.change_arm_angle(-INC_KEY);
-            break;
-        case 'z':
-            player.reset_angles();
-            break;
-        case 'q':
-            player.begin_punch();
+        case '1':
+            computer.change_movement();
     }
     glutPostRedisplay();
 }
@@ -121,37 +101,69 @@ void keyup(unsigned char key, int x, int y){
     glutPostRedisplay();
 }
 
+void mouse(int button, int state, int x, int y){
+    if(state == 0){
+        click_x = x;
+        printf("Clicked at x = %d\n", x);
+    }
+    else if(state == 1){
+        player.set_punch_status(0);
+        player.reset_angles(); /* should modify to return naturally
+                                maybe changing punch status.*/
+    }
+}
+
+void motion(int x, int y){
+    printf("Motion at x = %d\n", x);
+    GLfloat punch_percentage = min(1, (GLfloat)(abs(x - click_x)) / (rect_width / 2));
+    printf("Punch percentage: %.2f\n", punch_percentage);
+    if(x > click_x){
+        /* Right punch*/
+        player.set_punch_status(3);
+        GLfloat right_alpha = -135 + 105 * punch_percentage;
+        GLfloat right_beta = 135 - 72 * punch_percentage;
+        player.update_right_arm_angles(right_alpha, right_beta);
+    }
+    else if(x < click_x){
+        /* Left punch */
+        player.set_punch_status(1);
+        GLfloat left_alpha = 135 - 105 * punch_percentage;
+        GLfloat left_beta = -135 + 72 * punch_percentage;
+        player.update_left_arm_angles(left_alpha, left_beta);
+    }
+    
+}
+
 void init(void){
     // The color the windows will redraw. Its done to erase the previous frame.
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black, no opacity(alpha).
+    glClearColor(0, 0, 1, 1.0f);
  
-    glMatrixMode(GL_PROJECTION); // Select the projection matrix    
-    glOrtho(-(ViewingWidth/2),     // X coordinate of left edge             
-            (ViewingWidth/2),     // X coordinate of right edge            
-            -(ViewingHeight/2),     // Y coordinate of bottom edge             
-            (ViewingHeight/2),     // Y coordinate of top edge             
-            -100,     // Z coordinate of the “near” plane            
-            100);    // Z coordinate of the “far” plane
-    glMatrixMode(GL_MODELVIEW); // Select the projection matrix    
+    glMatrixMode(GL_PROJECTION); // Select the projection matrix
+    glOrtho(0, rect_width, 0, rect_height, -100, 100); // x_left, x_right, y_bottom, y_top, z_near, z_far
+    glMatrixMode(GL_MODELVIEW); // Select the projection matrix
     glLoadIdentity();
 }
 
 void idle(void){
     static GLdouble previous_time = glutGet(GLUT_ELAPSED_TIME);
+    static GLdouble computer_timer = 0;
     GLdouble current_time, time_diff;
     //Pega o tempo que passou do inicio da aplicacao
     current_time = glutGet(GLUT_ELAPSED_TIME);
     // Calcula o tempo decorrido desde de a ultima frame.
     time_diff = current_time - previous_time;
+    computer_timer += time_diff;
     //Atualiza o tempo do ultimo frame ocorrido
     previous_time = current_time;
 
+    computer.look_at(player);
+
     double inc = INC_KEYIDLE;
     if(keyStatus[(int)('w')]){
-        player.move_y(inc, computer, time_diff);
+        player.move(inc, computer, time_diff, rect_width, rect_height);
     }
     if(keyStatus[(int)('s')]){
-        player.move_y(-inc, computer, time_diff);
+        player.move(-inc, computer, time_diff, rect_width, rect_height);
     }
     if(keyStatus[(int)('a')]){
         player.rotate(inc, time_diff);
@@ -160,33 +172,75 @@ void idle(void){
         player.rotate(-inc, time_diff);
     }
 
+    if(computer.moving_towards_player()){
+        computer.move(inc, player, time_diff, rect_width, rect_height);
+        if(!computer.punching() && computer.get_pos().distance(player.get_pos()) <= 3 * computer.get_radius() + 1.5 * player.get_radius()){
+            if(rand() % 2){
+                computer.begin_left_punch();
+            }
+            else{
+                computer.begin_right_punch();
+            }
+        }
+    }
+    else{
+        computer.move(-inc, player, time_diff, rect_width, rect_height);
+    }
+
     if(player.punching()){
         player.punch(time_diff);
     }
+
+    if(computer.punching()){
+        computer.punch(time_diff);
+    }
+
+    if(player.hit(computer)){
+        player.increase_score();
+        player.retreat_punch(); /* modify to retreat according to the arm that hit */
+    }
+
+    if(computer.hit(player)){
+        computer.increase_score();
+        computer.retreat_punch(); /* modify to retreat according to the arm that hit */
+    }
+
+    if(player.get_score() >= 10){
+        player.set_win();
+    } 
+    else if(computer.get_score() >= 10){
+        computer.set_win();
+    }
+
+    if(computer_timer > 5000){
+        computer_timer = 0;
+        computer.change_movement();
+    }
+
     glutPostRedisplay();
 }
 
-
-
 int main(int argc, char* argv[]){
+    srand(time(NULL));
     tinyxml2::XMLDocument doc;
     doc.LoadFile("arena_2.svg");
     tinyxml2::XMLElement* rect = doc.FirstChildElement("svg")->FirstChildElement("rect");
     int rect_x = atoi(rect->Attribute("x"));
     int rect_y = atoi(rect->Attribute("y"));
-    int rect_width = atoi(rect->Attribute("width"));
-    int rect_height = atoi(rect->Attribute("height"));
+
+    rect_width = (GLfloat)atof(rect->Attribute("width"));
+    rect_height = (GLfloat)atof(rect->Attribute("height"));
     const char* rect_fill = rect->Attribute("fill");
 
     tinyxml2::XMLElement* circle_1 = doc.FirstChildElement("svg")->FirstChildElement("circle");
-    circle_1_x = atoi(circle_1->Attribute("cx"));
-    circle_1_y = atoi(circle_1->Attribute("cy"));
-    circle_1_r = atoi(circle_1->Attribute("r"));
+    int circle_1_x = atoi(circle_1->Attribute("cx")) - rect_x;
+    int circle_1_y = atoi(circle_1->Attribute("cy")) - rect_y;
+    int circle_1_r = atoi(circle_1->Attribute("r"));
     const char* circle_1_fill = circle_1->Attribute("fill");
 
     tinyxml2::XMLElement* circle_2 = doc.FirstChildElement("svg")->LastChildElement("circle");
-    int circle_2_x = atoi(circle_2->Attribute("cx"));
-    int circle_2_y = atoi(circle_2->Attribute("cy"));
+    int circle_2_x = atoi(circle_2->Attribute("cx")) - rect_x;
+    int circle_2_y = atoi(circle_2->Attribute("cy")) - rect_y;
     int circle_2_r = atoi(circle_2->Attribute("r"));
     const char* circle_2_fill = circle_2->Attribute("fill");
 
@@ -195,15 +249,22 @@ int main(int argc, char* argv[]){
     printf("circle_1_x = %d, circle_1_y = %d, circle_1_r = %d, circle_1_fill = %s\n", circle_1_x, circle_1_y, circle_1_r, circle_1_fill);
     printf("circle_2_x = %d, circle_2_y = %d, circle_2_r = %d, circle_2_fill = %s\n", circle_2_x, circle_2_y, circle_2_r, circle_2_fill);
 
+    if(strcmp(circle_1_fill, "green") == 0){
+        player.init(Point(circle_1_x, circle_1_y), circle_1_r, 0, 1, 0);
+        computer.init(Point(circle_2_x, circle_2_y), circle_2_r, 1, 0, 0);    
+    }
+    else{
+        player.init(Point(circle_2_x, circle_2_y), circle_2_r, 0, 1, 0);
+        computer.init(Point(circle_1_x, circle_1_y), circle_1_r, 1, 0, 0);
+    }
+
+    player.look_at(computer);
     
-    
-    // Initialize openGL with Double buffer and RGB color without transparency.
-    // Its interesting to try GLUT_SINGLE instead of GLUT_DOUBLE.
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
  
     // Create the window.
-    glutInitWindowSize(Width, Height);
+    glutInitWindowSize(rect_width, rect_height);
     glutInitWindowPosition(150,50);
     glutCreateWindow("Trabalho 2D");
  
@@ -212,7 +273,8 @@ int main(int argc, char* argv[]){
     glutKeyboardFunc(keyPress);
     glutIdleFunc(idle);
     glutKeyboardUpFunc(keyup);
-    
+    glutMouseFunc(mouse);
+    glutMotionFunc(motion);
     init();
  
     glutMainLoop();

@@ -5,16 +5,6 @@
 #include "point.h"
 #include <math.h>
 
-// Dimensions
-
-/*
-#define paddleHeight 80
-#define paddleWidth 10
-#define baseHeight 40
-#define baseWidth 100
-#define radiusWheel 30
-*/
-
 class Player {
     Point p;
     GLfloat radius;
@@ -36,8 +26,18 @@ class Player {
 
     int punch_status;       /* Only used for the computer.
                             If 0, not punching. 
-                            Else if 1, going to punch.
-                            Else if 2, retreating punch.  */ 
+                            Else if 1, going to punch (left).
+                            Else if 2, retreating punch (left).
+                            Else if 3, going to punch (right).
+                            Else if 4, retreating punch (right).
+                            */
+
+    int score;
+    int won;
+    int movement;           /* Only used for the computer.
+                            If 0, moving away. If 1, towards
+                            player.
+                            */
                              
 private:
     void draw_rect(GLfloat height, GLfloat width, GLfloat R, GLfloat G, GLfloat B);
@@ -48,7 +48,7 @@ private:
     void draw_player(Point p, GLfloat left_alpha, GLfloat left_beta, GLfloat right_alpha, GLfloat right_beta);
 
 public:
-    Player(Point _p, GLfloat _radius, GLfloat _R, GLfloat _G, GLfloat _B){
+    void init(Point _p, GLfloat _radius, GLfloat _R, GLfloat _G, GLfloat _B){
         p = _p;
         radius = _radius;
         nose_radius = _radius / 4;
@@ -56,7 +56,6 @@ public:
         arm_width = _radius / 4;
         arm_height = 2 * radius;
         theta = 0;
-        left_alpha = right_alpha = left_beta = right_beta = 0;
         left_alpha = 135;
         right_alpha = -135;
         left_beta = -135;
@@ -64,32 +63,50 @@ public:
         R = _R;
         G = _G;
         B = _B;
+        score = 0;
+        won = 0;
+        movement = 0;
+    }
 
-        /*
-        gX = 0; 
-        gY = -200; 
-        gTheta1 = 0; 
-        gTheta2 = 0; 
-        gTheta3 = 0; 
-        gThetaWheel = 0;*/ 
-    };
     void draw(){ 
         draw_player(p, left_alpha, left_beta, right_alpha, right_beta);
     };
     void rotate(GLfloat inc, GLdouble time_diff);
-    void move_y(GLfloat dy, Player p2, GLdouble time_diff);
+    void move(GLfloat dy, Player p2, GLdouble time_diff, GLint view_width, GLint view_height);
     void change_forearm_angle(GLfloat dy);
     void change_arm_angle(GLfloat dy);
     void reset_angles(void);
-    void begin_punch(void);
+    
+    void begin_left_punch(void);
+    void begin_right_punch(void);
+    
     int punching(void);
+    void set_punch_status(int status);
+    
+    void retreat_left_punch(void);
+    void retreat_right_punch(void);
     void retreat_punch(void);
+
     void punch(GLdouble time_diff);
 
     Point get_left_hand_pos(void);
     Point get_right_hand_pos(void);
 
     int hit(Player p2);
+
+    void update_left_arm_angles(GLfloat left_alpha, GLfloat left_beta);
+    void update_right_arm_angles(GLfloat right_alpha, GLfloat right_beta);
+
+    int get_score(void);
+    void increase_score(void);
+
+    void set_win(void);
+    int winner(void);
+    
+    void look_at(Player p2);
+
+    int moving_towards_player(void);
+    void change_movement(void);
 
     GLfloat get_x(){
         return p.x;
@@ -106,5 +123,5 @@ public:
     }
 };
 
-#endif	/* ROBO_H */
+#endif
 
