@@ -161,7 +161,6 @@ void idle(void){
         return;
     }
 
-
     static GLdouble previous_time = glutGet(GLUT_ELAPSED_TIME);
     static GLdouble computer_timer = 0;
     GLdouble current_time, time_diff;
@@ -250,7 +249,7 @@ void idle(void){
 int main(int argc, char* argv[]){
     srand(time(NULL));
     tinyxml2::XMLDocument doc;
-    doc.LoadFile("arena_2.svg");
+    doc.LoadFile(argv[1]);
     tinyxml2::XMLElement* rect = doc.FirstChildElement("svg")->FirstChildElement("rect");
     int rect_x = atoi(rect->Attribute("x"));
     int rect_y = atoi(rect->Attribute("y"));
