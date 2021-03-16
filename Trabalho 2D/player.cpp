@@ -24,6 +24,17 @@ void Player::draw_circle(GLfloat radius, GLfloat R, GLfloat G, GLfloat B){
     glEnd();
 }
 
+void Player::draw_empty_circle(GLfloat radius, GLfloat R, GLfloat G, GLfloat B){
+    glColor3f(R, G, B);
+    glLineWidth(5.0);
+    glBegin(GL_LINE_LOOP);
+        //glVertex3f(0, 0, 0);
+        for(int i = 0; i <= 20; i++){
+            glVertex3f (radius * cos(i * 2 * M_PI / 20), radius * sin(i * 2 * M_PI / 20), 0);
+        }
+    glEnd();
+}
+
 void Player::draw_dotted_circle(GLfloat radius, GLfloat R, GLfloat G, GLfloat B){
     glPointSize(3);
     glColor3f(R, G, B);
@@ -45,6 +56,7 @@ void Player::draw_arm(Point p, GLfloat alpha, GLfloat beta){
     glTranslatef(0, arm_height, 0);
     /* Hand */
     draw_circle(hand_radius, 1, 0, 0);
+    draw_empty_circle(hand_radius, 110.0/255, 33.0/255, 33.0/255);
     glPopMatrix();
 }
 
@@ -55,12 +67,14 @@ void Player::draw_player(Point p, GLfloat left_alpha, GLfloat left_beta, GLfloat
     glRotatef(theta, 0, 0, 1);
     /* Draw head. */
     draw_circle(radius, R, G, B);
+    draw_empty_circle(radius, R_border, B_border, G_border);
     /* Draw collision radius. */
     //draw_dotted_circle(radius * 3, 1, 1, 1);
     /* Draw nose. */
     glPushMatrix();
     glTranslatef(0, radius, 0);
     draw_circle(nose_radius, R, G, B);
+    draw_empty_circle(nose_radius, R_border, B_border, G_border);
     glPopMatrix();
     /* Draw arms and hands. */
     draw_arm(Point(-radius, 0), left_alpha, left_beta);

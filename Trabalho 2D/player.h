@@ -18,6 +18,10 @@ class Player {
     GLfloat G;
     GLfloat B;
 
+    GLfloat R_border;
+    GLfloat G_border;
+    GLfloat B_border;
+
     GLfloat left_alpha;     /* Angle left forearm - head. */ 
     GLfloat left_beta;      /* Angle left forearm - arm.  */
 
@@ -46,6 +50,7 @@ class Player {
 private:
     void draw_rect(GLfloat height, GLfloat width, GLfloat R, GLfloat G, GLfloat B);
     void draw_circle(GLfloat radius, GLfloat R, GLfloat G, GLfloat B);
+    void draw_empty_circle(GLfloat radius, GLfloat R, GLfloat G, GLfloat B);
     void draw_dotted_circle(GLfloat radius, GLfloat R, GLfloat G, GLfloat B);
     void draw_hand(Point p, GLfloat R, GLfloat G, GLfloat B);
     void draw_arm(Point p, GLfloat alpha, GLfloat beta);
@@ -71,6 +76,17 @@ public:
         won = 0;
         movement = 0;
         can_hit = 1;
+
+        if(G == 1.0f){
+            R_border = 33.0/255;
+            G_border = 110.0/255;
+            B_border = 33.0/255;
+        }
+        else{
+            R_border = 110.0/255;
+            G_border = 33.0/255;
+            B_border = 33.0/255;
+        }
     }
 
     void draw(){ 
