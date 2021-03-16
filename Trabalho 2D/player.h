@@ -22,6 +22,10 @@ class Player {
     GLfloat G_border;
     GLfloat B_border;
 
+    GLfloat R_arm;
+    GLfloat G_arm;
+    GLfloat B_arm;
+
     GLfloat left_alpha;     /* Angle left forearm - head. */ 
     GLfloat left_beta;      /* Angle left forearm - arm.  */
 
@@ -81,11 +85,19 @@ public:
             R_border = 33.0/255;
             G_border = 110.0/255;
             B_border = 33.0/255;
+
+            R_arm = 155.0/255;
+            G_arm = 187.0/255;
+            B_arm = 89.0/255;
         }
         else{
             R_border = 110.0/255;
             G_border = 33.0/255;
             B_border = 33.0/255;
+            
+            R_arm = 95.0/255;
+            G_arm = 140.0/255;
+            B_arm = 6.0/255;
         }
     }
 
@@ -131,6 +143,8 @@ public:
 
     int moving_towards_player(void);
     void change_movement(void);
+
+    int in_punching_distance(Player p2);
 
     GLfloat get_x(){
         return p.x;

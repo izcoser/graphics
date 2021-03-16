@@ -49,10 +49,12 @@ void Player::draw_arm(Point p, GLfloat alpha, GLfloat beta){
     glPushMatrix();
     glTranslatef(p.x, p.y, 0);
     glRotatef(alpha, 0, 0, 1);
-    draw_rect(arm_height, arm_width, 155.0/255, 187.0/255, 89.0/255);
+    draw_circle(arm_width / 2, R_arm, G_arm, B_arm);
+    draw_rect(arm_height, arm_width, R_arm, G_arm, B_arm);
     glTranslatef(0, arm_height, 0);
     glRotatef(beta, 0, 0, 1);
-    draw_rect(arm_height, arm_width, 155.0/255, 187.0/255, 89.0/255);
+    draw_circle(arm_width / 2, R_arm, G_arm, B_arm);
+    draw_rect(arm_height, arm_width, R_arm, G_arm, B_arm);
     glTranslatef(0, arm_height, 0);
     /* Hand */
     draw_circle(hand_radius, 1, 0, 0);
@@ -62,14 +64,11 @@ void Player::draw_arm(Point p, GLfloat alpha, GLfloat beta){
 
 void Player::draw_player(Point p, GLfloat left_alpha, GLfloat left_beta, GLfloat right_alpha, GLfloat right_beta){
     glPushMatrix();
-    //printf("Drawing player at %.2f, %.2f\n", p.x, p.y);
     glTranslatef(p.x, p.y, 0);
     glRotatef(theta, 0, 0, 1);
     /* Draw head. */
     draw_circle(radius, R, G, B);
     draw_empty_circle(radius, R_border, B_border, G_border);
-    /* Draw collision radius. */
-    //draw_dotted_circle(radius * 3, 1, 1, 1);
     /* Draw nose. */
     glPushMatrix();
     glTranslatef(0, radius, 0);
@@ -277,4 +276,10 @@ int Player::moving_towards_player(void){
 
 void Player::change_movement(void){
     movement = !movement;
+}
+
+int Player::in_punching_distance(Player p2){
+    GLfloat distance = get_pos().distance(p2.get_pos());
+    GLfloat p2_radius = p2.get_radius();
+    return distance <= radius * 3 + p2_radius + 0.2 || distance <= radius + p2_radius * 3 + 0.2; 
 }

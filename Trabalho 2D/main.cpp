@@ -112,7 +112,6 @@ void keyup(unsigned char key, int x, int y){
 void mouse(int button, int state, int x, int y){
     if(state == 0){
         click_x = x;
-        printf("Clicked at x = %d\n", x);
     }
     else if(state == 1){
         player.set_punch_status(0);
@@ -122,9 +121,7 @@ void mouse(int button, int state, int x, int y){
 }
 
 void motion(int x, int y){
-    printf("Motion at x = %d\n", x);
     GLfloat punch_percentage = min(1, (GLfloat)(abs(x - click_x)) / (rect_width / 2));
-    printf("Punch percentage: %.2f\n", punch_percentage);
     if(x > click_x){
         /* Right punch*/
         player.set_punch_status(3);
@@ -191,7 +188,7 @@ void idle(void){
     if(computer_enabled){
         if(computer.moving_towards_player()){
         computer.move(inc, player, time_diff, rect_width, rect_height);
-            if(!computer.punching() && computer.get_pos().distance(player.get_pos()) <= 3 * computer.get_radius() + 1.5 * player.get_radius()){
+            if(!computer.punching() && computer.in_punching_distance(player)){
                 if(rand() % 2){
                     computer.begin_left_punch();
                 }
@@ -270,11 +267,11 @@ int main(int argc, char* argv[]){
     int circle_2_r = atoi(circle_2->Attribute("r"));
     const char* circle_2_fill = circle_2->Attribute("fill");
 
-
+/*
     printf("rect x = %d, y = %d, width = %d, height = %d, fill = %s\n", rect_x, rect_y, rect_width, rect_height, rect_fill);
     printf("circle_1_x = %d, circle_1_y = %d, circle_1_r = %d, circle_1_fill = %s\n", circle_1_x, circle_1_y, circle_1_r, circle_1_fill);
     printf("circle_2_x = %d, circle_2_y = %d, circle_2_r = %d, circle_2_fill = %s\n", circle_2_x, circle_2_y, circle_2_r, circle_2_fill);
-
+*/
     if(strcmp(circle_1_fill, "green") == 0){
         player.init(Point(circle_1_x, circle_1_y), circle_1_r, 0, 1, 0);
         computer.init(Point(circle_2_x, circle_2_y), circle_2_r, 1, 0, 0);    
