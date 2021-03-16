@@ -92,7 +92,9 @@ void Player::move(GLfloat dy, Player p2, GLdouble time_diff, GLint view_width, G
     Point increment = Point(20*dy * cos(theta * 2 * M_PI / 360 + M_PI / 2) * time_diff, 20*dy * sin(theta * 2 * M_PI / 360 + M_PI / 2) * time_diff);
     Point new_point = p.sum(increment);
     GLfloat distance = new_point.distance(p2.get_pos());
-    if(!punching() && distance > radius * 3 + p2.get_radius() && distance > radius + p2.get_radius() * 3 \
+    static GLfloat d1 = radius * 3 + p2.get_radius();
+    static GLfloat d2 = radius + p2.get_radius() * 3;
+    if(!punching() && distance > d1 && distance > d2 \
     && inside_arena(new_point, radius, view_width, view_height)){
         p = new_point;
     }
@@ -280,6 +282,10 @@ void Player::change_movement(void){
 
 int Player::in_punching_distance(Player p2){
     GLfloat distance = get_pos().distance(p2.get_pos());
-    GLfloat p2_radius = p2.get_radius();
-    return distance <= radius * 3 + p2_radius + 0.2 || distance <= radius + p2_radius * 3 + 0.2; 
+
+    static GLfloat error = ((radius + p2.get_radius()) / 2) * 0.05;
+    static GLfloat d1 = radius * 3 + p2.get_radius() + error;
+    static GLfloat d2 = radius + p2.get_radius() * 3 + error;
+    
+    return distance <= d1 || distance <= d2; 
 }
