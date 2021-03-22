@@ -71,7 +71,7 @@ void renderScene(void){
     if(player.winner() || computer.winner()){
         print_win_message(rect_width / 2 - 80, rect_height / 2);
     }
-    glutSwapBuffers(); // Desenha the new frame of the game.
+    glutSwapBuffers();
 }
 
 void keyPress(unsigned char key, int x, int y){
@@ -115,8 +115,7 @@ void mouse(int button, int state, int x, int y){
     }
     else if(state == 1){
         player.set_punch_status(0);
-        player.reset_angles(); /* should modify to return naturally
-                                maybe changing punch status.*/
+        player.reset_angles();
     }
 }
 
@@ -161,12 +160,9 @@ void idle(void){
     static GLdouble previous_time = glutGet(GLUT_ELAPSED_TIME);
     static GLdouble computer_timer = 0;
     GLdouble current_time, time_diff;
-    //Pega o tempo que passou do inicio da aplicacao
     current_time = glutGet(GLUT_ELAPSED_TIME);
-    // Calcula o tempo decorrido desde de a ultima frame.
     time_diff = current_time - previous_time;
     computer_timer += time_diff;
-    //Atualiza o tempo do ultimo frame ocorrido
     previous_time = current_time;
 
     computer.look_at(player);
@@ -253,7 +249,6 @@ int main(int argc, char* argv[]){
 
     rect_width = (GLfloat)atof(rect->Attribute("width"));
     rect_height = (GLfloat)atof(rect->Attribute("height"));
-    const char* rect_fill = rect->Attribute("fill");
 
     tinyxml2::XMLElement* circle_1 = doc.FirstChildElement("svg")->FirstChildElement("circle");
     int circle_1_x = atoi(circle_1->Attribute("cx")) - rect_x;
@@ -265,16 +260,10 @@ int main(int argc, char* argv[]){
     int circle_2_x = atoi(circle_2->Attribute("cx")) - rect_x;
     int circle_2_y = atoi(circle_2->Attribute("cy")) - rect_y;
     int circle_2_r = atoi(circle_2->Attribute("r"));
-    const char* circle_2_fill = circle_2->Attribute("fill");
 
-/*
-    printf("rect x = %d, y = %d, width = %d, height = %d, fill = %s\n", rect_x, rect_y, rect_width, rect_height, rect_fill);
-    printf("circle_1_x = %d, circle_1_y = %d, circle_1_r = %d, circle_1_fill = %s\n", circle_1_x, circle_1_y, circle_1_r, circle_1_fill);
-    printf("circle_2_x = %d, circle_2_y = %d, circle_2_r = %d, circle_2_fill = %s\n", circle_2_x, circle_2_y, circle_2_r, circle_2_fill);
-*/
     if(strcmp(circle_1_fill, "green") == 0){
         player.init(Point(circle_1_x, circle_1_y), circle_1_r, 0, 1, 0);
-        computer.init(Point(circle_2_x, circle_2_y), circle_2_r, 1, 0, 0);    
+        computer.init(Point(circle_2_x, circle_2_y), circle_2_r, 1, 0, 0);
     }
     else{
         player.init(Point(circle_2_x, circle_2_y), circle_2_r, 0, 1, 0);
@@ -286,12 +275,10 @@ int main(int argc, char* argv[]){
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
  
-    // Create the window.
     glutInitWindowSize(rect_width, rect_height);
     glutInitWindowPosition(150,50);
     glutCreateWindow("Trabalho 2D");
  
-    // Define callbacks.
     glutDisplayFunc(renderScene);
     glutKeyboardFunc(keyPress);
     glutIdleFunc(idle);
