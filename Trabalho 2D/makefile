@@ -5,7 +5,7 @@ LINKING = -lglut -lGL -lGLU -lm
 TARGET = *
 
 all:
-	$(CXX) $(CFLAGS) -o out $(TARGET).cpp $(LINKING)
+	$(CXX) $(CFLAGS) -o trabalhocg $(TARGET).cpp $(LINKING)
 
 clean:
-	$(RM) $(TARGET)
+	$(RM) trabalhocg
