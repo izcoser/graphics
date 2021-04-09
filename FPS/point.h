@@ -15,6 +15,7 @@ class Point{
         Point(GLfloat _x, GLfloat _y, GLfloat _z);
         Point() = default;
         Point sum(Point a);
+        Point cross(Point b);
         //Point rotate(GLfloat angle); /* Angle in degrees. */
 };
 

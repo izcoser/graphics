@@ -12,6 +12,12 @@
 
 #define INC_KEYIDLE 0.01
 #define INC_KEY 1
+
+enum ROTATION_AXES{
+    X_AXIS,
+    Y_AXIS,
+    Z_AXIS,
+};
  
 /* Global variables */
 char title[] = "Walking around with FPS-like controls";
@@ -26,18 +32,39 @@ int keyStatus[256] = {0};
 
 Camera cam(Point(0.0f, 0.0f, 0.0f), Point(0.0f, 0.0f, -100.0f), Point(0.0f, 1.0f, 0.0f));
 
-GLfloat xMouse = 0;
+Point mouse(0.0f, 0.0f, 0.0f);
 
 // Angle between (zAt, xAt) and (1, 0), radians.
-GLfloat angle = M_PI;
+GLfloat sideangle = M_PI; // sideways angle
+GLfloat upangle = 0; // look up and down, goes from -90 to 90.
 
 // Rotates with an angle around Y.
-void rotateVector(GLfloat &x, GLfloat &y, GLfloat &z, GLfloat angle){
+void rotateVector(GLfloat &x, GLfloat &y, GLfloat &z, GLfloat angle, int around){
     GLfloat xx = x;
+    GLfloat yy = y;
     GLfloat zz = z;
 
-    x = xx * cos(angle) + zz * sin(angle);
-    z = -xx * sin(angle) + zz * cos(angle);
+    switch(around){
+        case X_AXIS:
+            y = yy * cos(angle) - zz * sin(angle);
+            z = yy * sin(angle) + zz * cos(angle);
+            break;
+        case Y_AXIS:
+            x = xx * cos(angle) + zz * sin(angle);
+            z = -xx * sin(angle) + zz * cos(angle);
+            break;
+        case Z_AXIS: // won't be used.
+            break;
+    }
+}
+
+void setVectorAngle(GLfloat &x, GLfloat &y, GLfloat &z, GLfloat angle, int around){
+    GLfloat difference = upangle - angle;
+    Point forward_vector(cam.lookat.x - cam.p.x, cam.lookat.y - cam.p.y, cam.lookat.z - cam.p.z);
+    Point camera_left(forward_vector.cross(Point(0, 1, 0)));
+    printf("Rotating up angle by %.2f from %.2f to get to %.2f\n", difference, upangle, angle);
+    rotateVector(x, y, z, difference, around);
+    upangle = angle;
 }
  
 /* Initialize OpenGL Graphics */
@@ -190,9 +217,24 @@ void display() {
       glVertex3f(-1.0f,-1.0f, 1.0f);
    glEnd();   // Done drawing the pyramid
    glPopMatrix();
- 
+
+   
+    glutSolidSphere(0.1, 20, 10);
+
+    glColor3f(1.0f,1.0f,1.0f);
+    glPushMatrix();
+    glTranslatef(0, 0, -10.f);
+    glutSolidSphere(0.1, 20, 10);
+    glPopMatrix();
+
+    glColor3f(0.0f,0.0f,1.0f);
+    glPushMatrix();
+    glTranslatef(-10, 0, 0.f);
+    glutSolidSphere(0.1, 20, 10);
+    glPopMatrix();
+   
     //glutSolidSphere (1.0, 20, 16);
-   glutSwapBuffers();  // Swap the front and back frame buffers (double buffering)
+    glutSwapBuffers();  // Swap the front and back frame buffers (double buffering)
  
    // Update the rotational angle after each refresh [NEW]
    //anglePyramid += 0.2f;
@@ -244,15 +286,15 @@ void keyboard(unsigned char key, int x, int y){
             break;
         case 'q':
             rotationAngle = (1 / (GLfloat)width) * 2 * M_PI;
-            rotateVector(cam.lookat.x, cam.lookat.y, cam.lookat.z, rotationAngle);
+            rotateVector(cam.lookat.x, cam.lookat.y, cam.lookat.z, rotationAngle, Y_AXIS);
             printf("xAt: %.2f, zAt: %.2f\n", cam.lookat.x, cam.lookat.z);
-            angle += rotationAngle;
+            sideangle += rotationAngle;
             break;
         case 'e':
             rotationAngle = (-1 / (GLfloat)width) * 2 * M_PI;
-            rotateVector(cam.lookat.x, cam.lookat.y, cam.lookat.z, rotationAngle);
+            rotateVector(cam.lookat.x, cam.lookat.y, cam.lookat.z, rotationAngle, Y_AXIS);
             printf("xAt: %.2f, zAt: %.2f\n", cam.lookat.x, cam.lookat.z);
-            angle += rotationAngle;
+            sideangle += rotationAngle;
             break;
 
         glutPostRedisplay();
@@ -267,21 +309,38 @@ void keyUp(unsigned char key, int x, int y){
 }
 
 void passiveMotion(int x, int y){
+    int height = glutGet(GLUT_WINDOW_HEIGHT);
+    //y = height - y;
 
-    GLfloat diff = xMouse - x;
-    xMouse = x;
-    if(abs(diff) > 30){ // avoid sudden camera rotations when mouse enters screen
+    printf("Window height: %d, y = %d\n", height, y);
+
+    GLfloat diff_x = mouse.x - x;
+    GLfloat diff_y = mouse.y - y;
+    mouse.x = x;
+    mouse.y = y;
+    if(abs(diff_x) > 30 || abs(diff_y) > 30){ // avoid sudden camera rotations when mouse enters screen
         return;
     }
     else{
         int width = glutGet(GLUT_WINDOW_WIDTH);
-        GLfloat rotationAngle = (diff / (GLfloat)width) * 2 * M_PI;
-        rotateVector(cam.lookat.x, cam.lookat.y, cam.lookat.z, rotationAngle);
+        GLfloat rotationAngleAroundY = (diff_x / (GLfloat)width) * 2 * M_PI;
+        rotateVector(cam.lookat.x, cam.lookat.y, cam.lookat.z, rotationAngleAroundY, Y_AXIS);
         printf("xAt: %.2f, zAt: %.2f\n", cam.lookat.x, cam.lookat.z);
-        angle += rotationAngle;
+        //angle += rotationAngleAroundY;
+        sideangle = atan2(cam.lookat.z - 1, cam.lookat.x - 0) * -1 + M_PI / 2; // it's ugly but it works
         //angle = atan2(zAt, xAt) - M_PI / 2;
-        printf("Angle: %.2f, %.2f\n", angle, angle * 180 / M_PI);
+        printf("Angle: %.2f, %.2f\n", sideangle, sideangle * 180 / M_PI);
 
+        int height = glutGet(GLUT_WINDOW_HEIGHT);
+        GLfloat new_upangle = (M_PI / (GLfloat)height) * mouse.y - M_PI / 2;
+        printf("New angle should be: %.2f, %.2f\n", new_upangle, new_upangle * 180 / M_PI);
+        setVectorAngle(cam.lookat.x, cam.lookat.y, cam.lookat.z, new_upangle, X_AXIS);
+        //GLfloat rotationAngleAroundX = (diff_y / (GLfloat)height) * 2 * M_PI;
+        //rotateVector(cam.lookat.x, cam.lookat.y, cam.lookat.z, rotationAngleAroundX, X_AXIS);
+        //printf("xAt: %.2f, zAt: %.2f\n", cam.lookat.x, cam.lookat.z);
+        //angle += rotationAngle;
+        //angle = atan2(zAt, xAt) - M_PI / 2;
+        //printf("Angle: %.2f, %.2f\n", angle, angle * 180 / M_PI);
     }    
 }
 
@@ -294,20 +353,20 @@ void idle(void){
 
     GLfloat inc = INC_KEYIDLE;
     if(keyStatus[(int)('w')]){
-        cam.p.z += inc * cos(angle) * time_diff;
-        cam.p.x += inc * sin(angle) * time_diff;
+        cam.p.z += inc * cos(sideangle) * time_diff;
+        cam.p.x += inc * sin(sideangle) * time_diff;
     }
     if(keyStatus[(int)('s')]){
-        cam.p.z -= inc * cos(angle) * time_diff;
-        cam.p.x -= inc * sin(angle) * time_diff;
+        cam.p.z -= inc * cos(sideangle) * time_diff;
+        cam.p.x -= inc * sin(sideangle) * time_diff;
     }
     if(keyStatus[(int)('a')]){
-        cam.p.x += inc * cos(angle) * time_diff;
-        cam.p.z -= inc * sin(angle) * time_diff;
+        cam.p.x += inc * cos(sideangle) * time_diff;
+        cam.p.z -= inc * sin(sideangle) * time_diff;
     }
     if(keyStatus[(int)('d')]){
-        cam.p.x -= inc * cos(angle) * time_diff;
-        cam.p.z += inc * sin(angle) * time_diff;
+        cam.p.x -= inc * cos(sideangle) * time_diff;
+        cam.p.z += inc * sin(sideangle) * time_diff;
     }
     glutPostRedisplay();
 }
@@ -317,7 +376,7 @@ void idle(void){
 int main(int argc, char** argv) {
    glutInit(&argc, argv);            // Initialize GLUT
    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE); // Enable double buffered mode
-   glutInitWindowSize(640, 480);   // Set the window's initial width & height
+   glutInitWindowSize(1280, 720);   // Set the window's initial width & height
    glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
    glutCreateWindow(title);          // Create window with the given title
    glutDisplayFunc(display);       // Register callback handler for window re-paint event

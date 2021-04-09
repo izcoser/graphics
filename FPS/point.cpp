@@ -15,6 +15,14 @@ Point Point::sum(Point a){
     return Point(x + a.x, y + a.y, z + a.z);
 }
 
+Point Point::cross(Point b){
+    return Point(y * b.z - z * b.y, z * b.x - x * b.z, x * b.y - y * b.x);
+    /*  cx = aybz − azby
+        cy = azbx − axbz
+        cz = axby − aybx
+    */
+}
+
 /*Point Point::rotate(GLfloat angle){
     angle *= M_PI / 180;
     GLfloat s = sin(angle);
