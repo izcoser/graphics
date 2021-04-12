@@ -64,6 +64,7 @@ void rotateVector(GLfloat &x, GLfloat &y, GLfloat &z, GLfloat angle){
  
 /* Initialize OpenGL Graphics */
 void initGL() {
+    //glutSetCursor(GLUT_CURSOR_NONE);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color to black and opaque
     glClearDepth(1.0f);                   // Set background depth to farthest
     glEnable(GL_DEPTH_TEST);   // Enable depth testing for z-culling
@@ -244,25 +245,6 @@ void keyUp(unsigned char key, int x, int y){
 }
 
 void passiveMotion(int x, int y){
-/*
-    GLfloat diff = x - xMouse;
-    xMouse = x;
-
-    if(abs(diff) > 30){ // avoid sudden camera rotations when mouse enters screen
-        return;
-    }
-    else{
-        int width = glutGet(GLUT_WINDOW_WIDTH);
-        //angle = (180.0 / (GLfloat)width) * x - 90;
-        //angle += diff * 0.5;
-        //GLfloat rotationAngle = (diff / (GLfloat)width) * 300;
-        //angle += rotationAngle;
-        //printf("Angle: %.2f\n", angle);
-
-        int height = glutGet(GLUT_WINDOW_HEIGHT);
-        upangle = (180.0 / (GLfloat)height) * y - 90;
-        printf("UpAngle: %.2f\n", upangle);
-    }    */
     if (firstMouse){
         xMouse = x;
         yMouse = y;
@@ -291,10 +273,15 @@ void passiveMotion(int x, int y){
     direction.y = sin(radians(pitch));
     direction.z = sin(radians(yaw)) * cos(radians(pitch));
     cam.target = direction.normalize();
+
+    if(x < 100 || y < 100 || x > glutGet(GLUT_WINDOW_WIDTH) - 100 || y > glutGet(GLUT_WINDOW_HEIGHT) - 100){
+        xMouse = glutGet(GLUT_WINDOW_WIDTH) / 2;
+        yMouse = glutGet(GLUT_WINDOW_HEIGHT) / 2;
+        glutWarpPointer(glutGet(GLUT_WINDOW_WIDTH) / 2, glutGet(GLUT_WINDOW_HEIGHT) / 2);
+    }
 }
 
 void idle(void){
-    //glutWarpPointer(640, 360);
     static GLdouble previous_time = glutGet(GLUT_ELAPSED_TIME);
     GLdouble current_time, time_diff;
     current_time = glutGet(GLUT_ELAPSED_TIME);
@@ -331,19 +318,19 @@ void idle(void){
 
 /* Main function: GLUT runs as a console application starting at main() */
 int main(int argc, char** argv) {
-   glutInit(&argc, argv);            // Initialize GLUT
-   glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE); // Enable double buffered mode
-   glutInitWindowSize(1280, 720);   // Set the window's initial width & height
-   glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
-   glutCreateWindow(title);          // Create window with the given title
-   glutDisplayFunc(display);       // Register callback handler for window re-paint event
-   glutReshapeFunc(reshape);       // Register callback handler for window re-size event
-   glutKeyboardFunc(keyboard);
-   glutKeyboardUpFunc(keyUp);
-   glutPassiveMotionFunc(passiveMotion);
-   glutIdleFunc(idle);
-   initGL();                       // Our own OpenGL initialization
-   //glutTimerFunc(0, timer, 0);     // First timer call immediately [NEW]
-   glutMainLoop();                 // Enter the infinite event-processing loop
-   return 0;
+    glutInit(&argc, argv);            // Initialize GLUT
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE); // Enable double buffered mode
+    glutInitWindowSize(1280, 720);   // Set the window's initial width & height
+    glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
+    glutCreateWindow(title);          // Create window with the given title
+    glutDisplayFunc(display);       // Register callback handler for window re-paint event
+    glutReshapeFunc(reshape);       // Register callback handler for window re-size event
+    glutKeyboardFunc(keyboard);
+    glutKeyboardUpFunc(keyUp);
+    glutPassiveMotionFunc(passiveMotion);
+    glutIdleFunc(idle);
+    initGL();                       // Our own OpenGL initialization
+    //glutTimerFunc(0, timer, 0);     // First timer call immediately [NEW]
+    glutMainLoop();                 // Enter the infinite event-processing loop
+    return 0;
 }
