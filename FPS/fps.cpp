@@ -160,12 +160,15 @@ void drawFloor(){
     glEnd();
 }
 
-void drawAim(void){
+void drawAim(int size){
     /*https://stackoverflow.com/questions/5467218/opengl-2d-hud-over-3d */ 
+    int width = glutGet(GLUT_WINDOW_WIDTH);
+    int height = glutGet(GLUT_WINDOW_HEIGHT);
+    
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0.0, 1280, 720, 0.0, -1.0, 10.0);
+    glOrtho(0.0, width, height, 0.0, -1.0, 10.0);
     glMatrixMode(GL_MODELVIEW);
     //glPushMatrix();        ----Not sure if I need this
     glLoadIdentity();
@@ -181,11 +184,11 @@ void drawAim(void){
 
     glBegin(GL_LINES);
         glColor3f(1.0f, 1.0f, 1.0);
-        glVertex2f(640, 314);
-        glVertex2f(640, 326);
+        glVertex2f(width / 2, height / 2 - size);
+        glVertex2f(width / 2, height / 2 + size);
 
-        glVertex2f(634, 320);
-        glVertex2f(646, 320);
+        glVertex2f(width / 2 - size, height / 2);
+        glVertex2f(width / 2 + size, height / 2);
     glEnd();
     // Making sure we can render 3d again
     glMatrixMode(GL_PROJECTION);
@@ -229,7 +232,7 @@ void display() {
     //bullet.draw();
     glPopMatrix();
 
-    drawAim();
+    drawAim(6);
 
     glutSwapBuffers();
 }
