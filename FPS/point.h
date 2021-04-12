@@ -15,6 +15,15 @@ class Point{
         Point(GLfloat _x, GLfloat _y, GLfloat _z);
         Point() = default;
         Point sum(Point a);
+        Point normalize(void);
+        Point cross(Point b);
+
+        Point operator+(const Point& b);
+        Point& operator+=(const Point& b);
+        Point operator-(const Point& b);
+        Point& operator-=(const Point& b);
+        Point operator*(const GLdouble& t);
+
         //Point rotate(GLfloat angle); /* Angle in degrees. */
 };
 

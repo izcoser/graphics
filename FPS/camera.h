@@ -7,12 +7,15 @@
 
 class Camera{
     public:
-        Point p;        // Camera position.
-        Point lookat;   // At vector.
-        Point up;       // Up vector.
+        Point pos;              // Camera position.
+        Point target;           // At vector.
+        Point up;               // Up vector.
+        
+        //Point direction;        // Not the best chosen vector name, since it is actually pointing in the reverse direction of what it is targeting.
+        //Point right;            // Right vector.
 
         Camera();
-        Camera(Point p, Point lookat, Point up);
+        Camera(Point pos, Point target, Point up);
 };
 
 #endif

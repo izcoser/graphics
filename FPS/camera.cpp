@@ -2,13 +2,13 @@
 #include "point.h"
 
 Camera::Camera(){
-    p = Point(0, 0, 0);
-    lookat = Point(0, 0, -1);
+    pos = Point(0, 0, 0);
+    target = Point(0, 0, -1);
     up = Point(0, 1, 0);
 }
 
-Camera::Camera(Point p, Point lookat, Point up){
-    this->p = p;
-    this->lookat = lookat;
+Camera::Camera(Point pos, Point target, Point up){
+    this->pos = pos;
+    this->target = target;
     this->up = up;
 }

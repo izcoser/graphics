@@ -9,9 +9,17 @@
 
 #include "camera.h"
 #include "point.h"
+#include "objloader.h"
 
 #define INC_KEYIDLE 0.01
 #define INC_KEY 1
+
+mesh tree;
+mesh tree2;
+mesh lowtree;
+mesh house;
+mesh bullet;
+mesh girl;
  
 /* Global variables */
 char title[] = "Walking around with FPS-like controls";
@@ -24,12 +32,26 @@ Point cube(1.5f, 0.0f, -7.0f);
 
 int keyStatus[256] = {0};
 
-Camera cam(Point(0.0f, 0.0f, 0.0f), Point(0.0f, 0.0f, -100.0f), Point(0.0f, 1.0f, 0.0f));
+Camera cam(Point(0.0f, 2.0f, 0.0f), Point(0.0f, 0.0f, -1.0f), Point(0.0f, 1.0f, 0.0f));
 
 GLfloat xMouse = 0;
+GLfloat yMouse = 0;
 
-// Angle between (zAt, xAt) and (1, 0), radians.
-GLfloat angle = M_PI;
+// Horizontal angle of the camera in degrees.
+GLfloat angle = 0;
+
+// Vertical angle of the camera in degrees.
+GLfloat upangle = 0;
+
+GLfloat yaw = -90.0f; // horizontal angle
+GLfloat pitch = 0; // vertical angle
+// https://learnopengl.com/Getting-started/Camera
+
+int firstMouse = 1;
+
+GLfloat radians(GLfloat degrees){
+    return degrees * M_PI / 180;
+}
 
 // Rotates with an angle around Y.
 void rotateVector(GLfloat &x, GLfloat &y, GLfloat &z, GLfloat angle){
@@ -46,21 +68,9 @@ void initGL() {
     glClearDepth(1.0f);                   // Set background depth to farthest
     glEnable(GL_DEPTH_TEST);   // Enable depth testing for z-culling
     glDepthFunc(GL_LEQUAL);    // Set the type of depth-test
+    glEnable(GL_CULL_FACE); //?
     glShadeModel(GL_SMOOTH);   // Enable smooth shading
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);  // Nice perspective corrections
-
-    /*GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-    GLfloat mat_shininess[] = { 50.0 };
-    GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 };
-    glClearColor (0.0, 0.0, 0.0, 0.0);
-    glShadeModel (GL_SMOOTH);
-
-    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);*/
 
     // Create light components.
     GLfloat ambientLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
@@ -84,126 +94,100 @@ void initGL() {
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHT1);
 
-    glColorMaterial(GL_FRONT, GL_DIFFUSE); /*cores*/
-    glEnable(GL_COLOR_MATERIAL);
+    //glColorMaterial(GL_FRONT, GL_DIFFUSE); /*cores*/
+    //glEnable(GL_COLOR_MATERIAL);
     //glEnable(GL_DEPTH_TEST);
+
+    tree.loadMesh("Tree.obj");
+    tree2.loadMesh("Tree2.obj");
+    lowtree.loadMesh("lowtree.obj");
+    house.loadMesh("House.obj");
+    girl.loadMesh("anime.obj");
+    //bullet.loadMesh("bullet.obj");
 }
- 
-/* Handler for window-repaint event. Called back when the window first appears and
-   whenever the window needs to be re-painted. */
+
+void DrawObj(double size)
+{   
+    GLfloat materialEmission[] = { 0.00, 0.00, 0.00, 1.0};
+    GLfloat materialColor[] = { 1.0, 1.0, 1.0, 1.0};
+    GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0};
+    GLfloat mat_shininess[] = { 128 };
+    glMaterialfv(GL_FRONT, GL_EMISSION, materialEmission);
+    glMaterialfv(GL_FRONT, GL_AMBIENT, materialColor);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, materialColor);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+    glColor3f(1,0,0);
+    glutSolidCube(size);
+    //glutSolidSphere(size, 20, 10);
+}
+
+void DrawFloor(){
+    glBegin(GL_LINES);
+        for(int i = -100; i < 100; i += 4){
+            glVertex3f(i, 0, 0);
+            glVertex3f(i, 0, 100);
+
+            glVertex3f(-100, 0, i);
+            glVertex3f(0, 0, i);
+        }/*
+        glVertex3f(0, 0, 0);
+        glVertex3f(0, 0, 20);
+
+        glVertex3f(4, 0, 0);
+        glVertex3f(4, 0, 20);
+
+        glVertex3f(8, 0, 0);
+        glVertex3f(8, 0, 20);
+
+        glVertex3f(12, 0, 0);
+        glVertex3f(12, 0, 20);
+
+        glVertex3f(16, 0, 0);
+        glVertex3f(16, 0, 20);*/
+    glEnd();
+}
+
 void display() {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear color and depth buffers
-   glMatrixMode(GL_MODELVIEW);     // To operate on model-view matrix
- 
-   // Render a color-cube consisting of 6 quads with different colors
-   glLoadIdentity();                 // Reset the model-view matrix
-   gluLookAt(cam.p.x, cam.p.y, cam.p.z, cam.lookat.x, cam.lookat.y, cam.lookat.z, cam.up.x, cam.up.y, cam.up.z);
-   //glTranslatef(1.5f, 0.0f, -7.0f);  // Move right and into the screen
-   glPushMatrix();
-   glTranslatef(cube.x, cube.y, cube.z);
-   glRotatef(angleCube, 1.0f, 1.0f, 1.0f);  // Rotate about (1,1,1)-axis [NEW]
-
-   glBegin(GL_QUADS);                // Begin drawing the color cube with 6 quads
-      // Top face (y = 1.0f)
-      // Define vertices in counter-clockwise (CCW) order with normal pointing out
-      glColor3f(0.0f, 1.0f, 0.0f);     // Green
-      glVertex3f( 1.0f, 1.0f, -1.0f);
-      glVertex3f(-1.0f, 1.0f, -1.0f);
-      glVertex3f(-1.0f, 1.0f,  1.0f);
-      glVertex3f( 1.0f, 1.0f,  1.0f);
- 
-      // Bottom face (y = -1.0f)
-      glColor3f(1.0f, 0.5f, 0.0f);     // Orange
-      glVertex3f( 1.0f, -1.0f,  1.0f);
-      glVertex3f(-1.0f, -1.0f,  1.0f);
-      glVertex3f(-1.0f, -1.0f, -1.0f);
-      glVertex3f( 1.0f, -1.0f, -1.0f);
- 
-      // Front face  (z = 1.0f)
-      glColor3f(1.0f, 0.0f, 0.0f);     // Red
-      glVertex3f( 1.0f,  1.0f, 1.0f);
-      glVertex3f(-1.0f,  1.0f, 1.0f);
-      glVertex3f(-1.0f, -1.0f, 1.0f);
-      glVertex3f( 1.0f, -1.0f, 1.0f);
- 
-      // Back face (z = -1.0f)
-      glColor3f(1.0f, 1.0f, 0.0f);     // Yellow
-      glVertex3f( 1.0f, -1.0f, -1.0f);
-      glVertex3f(-1.0f, -1.0f, -1.0f);
-      glVertex3f(-1.0f,  1.0f, -1.0f);
-      glVertex3f( 1.0f,  1.0f, -1.0f);
- 
-      // Left face (x = -1.0f)
-      glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-      glVertex3f(-1.0f,  1.0f,  1.0f);
-      glVertex3f(-1.0f,  1.0f, -1.0f);
-      glVertex3f(-1.0f, -1.0f, -1.0f);
-      glVertex3f(-1.0f, -1.0f,  1.0f);
- 
-      // Right face (x = 1.0f)
-      glColor3f(1.0f, 0.0f, 1.0f);     // Magenta
-      glVertex3f(1.0f,  1.0f, -1.0f);
-      glVertex3f(1.0f,  1.0f,  1.0f);
-      glVertex3f(1.0f, -1.0f,  1.0f);
-      glVertex3f(1.0f, -1.0f, -1.0f);
-   glEnd();  // End of drawing color-cube
-   glPopMatrix();
- 
-   // Render a pyramid consists of 4 triangles
-   //glLoadIdentity();                  // Reset the model-view matrix
-   glPushMatrix();
-   glTranslatef(-1.5f, 0.0f, -6.0f);  // Move left and into the screen
-   glRotatef(anglePyramid, 1.0f, 1.0f, 0.0f);  // Rotate about the (1,1,0)-axis [NEW]
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear color and depth buffers
+    glMatrixMode(GL_MODELVIEW);     // To operate on model-view matrix
     
+    // Render a color-cube consisting of 6 quads with different colors
+    glLoadIdentity();                 // Reset the model-view matrix
 
-   glBegin(GL_TRIANGLES);           // Begin drawing the pyramid with 4 triangles
-      // Front
-      glColor3f(1.0f, 0.0f, 0.0f);     // Red
-      glVertex3f( 0.0f, 1.0f, 0.0f);
-      glColor3f(0.0f, 1.0f, 0.0f);     // Green
-      glVertex3f(-1.0f, -1.0f, 1.0f);
-      glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-      glVertex3f(1.0f, -1.0f, 1.0f);
- 
-      // Right
-      glColor3f(1.0f, 0.0f, 0.0f);     // Red
-      glVertex3f(0.0f, 1.0f, 0.0f);
-      glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-      glVertex3f(1.0f, -1.0f, 1.0f);
-      glColor3f(0.0f, 1.0f, 0.0f);     // Green
-      glVertex3f(1.0f, -1.0f, -1.0f);
- 
-      // Back
-      glColor3f(1.0f, 0.0f, 0.0f);     // Red
-      glVertex3f(0.0f, 1.0f, 0.0f);
-      glColor3f(0.0f, 1.0f, 0.0f);     // Green
-      glVertex3f(1.0f, -1.0f, -1.0f);
-      glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-      glVertex3f(-1.0f, -1.0f, -1.0f);
- 
-      // Left
-      glColor3f(1.0f,0.0f,0.0f);       // Red
-      glVertex3f( 0.0f, 1.0f, 0.0f);
-      glColor3f(0.0f,0.0f,1.0f);       // Blue
-      glVertex3f(-1.0f,-1.0f,-1.0f);
-      glColor3f(0.0f,1.0f,0.0f);       // Green
-      glVertex3f(-1.0f,-1.0f, 1.0f);
-   glEnd();   // Done drawing the pyramid
-   glPopMatrix();
- 
-    //glutSolidSphere (1.0, 20, 16);
-   glutSwapBuffers();  // Swap the front and back frame buffers (double buffering)
- 
-   // Update the rotational angle after each refresh [NEW]
-   //anglePyramid += 0.2f;
-   //angleCube -= 0.15f;
+
+    //glRotatef(upangle, 1, 0, 0);
+    //glRotatef(angle, 0, 1, 0);
+    gluLookAt(cam.pos.x, cam.pos.y, cam.pos.z, cam.target.x + cam.pos.x, cam.target.y + cam.pos.y, cam.target.z + cam.pos.z, cam.up.x, cam.up.y, cam.up.z);
+    //girl.draw();
+
+    glutSolidSphere(0.5, 20, 10);
+    DrawFloor();
+
+    glPushMatrix();
+    glTranslatef(0, 0, -5);
+    //DrawObj(1);
+    //glutSolidSphere(0.5, 20, 10);
+    tree.draw();
+    glTranslatef(-5, 0, 0);
+    tree2.draw();
+    glTranslatef(-5, 0, 0);
+    glPushMatrix();
+    glScalef(1.0f / 5.0f, 1.0f / 5.0f, 1.0f / 5.0f);
+    lowtree.draw();
+    glPopMatrix();
+    glTranslatef(0, 0, 25);
+    house.draw();
+    glTranslatef(0, 0, 10);
+    glScalef(1.0f / 4.0f, 1.0f / 4.0f, 1.0f / 4.0f);
+    girl.draw();
+    //bullet.draw();
+    glPopMatrix();
+
+
+
+    glutSwapBuffers();
 }
- 
-/* Called back when timer expired [NEW]
-void timer(int value) {
-    glutPostRedisplay();      // Post re-paint request to activate display()    
-    glutTimerFunc(refreshMills, timer, 0); // next timer call milliseconds later
-}*/
 
 /* Handler for window re-size event. Called back when the window first appears and
    whenever the window is re-sized with its new width and height */
@@ -223,8 +207,6 @@ void reshape(GLsizei width, GLsizei height) {  // GLsizei for non-negative integ
 }
  
 void keyboard(unsigned char key, int x, int y){
-    int width = glutGet(GLUT_WINDOW_WIDTH);
-    GLfloat rotationAngle;
     switch(key){        
         case 'd':
         case 'D':
@@ -242,23 +224,18 @@ void keyboard(unsigned char key, int x, int y){
         case 'S':
             keyStatus[(int)('s')] = 1;
             break;
-        case 'q':
-            rotationAngle = (1 / (GLfloat)width) * 2 * M_PI;
-            rotateVector(cam.lookat.x, cam.lookat.y, cam.lookat.z, rotationAngle);
-            printf("xAt: %.2f, zAt: %.2f\n", cam.lookat.x, cam.lookat.z);
-            angle += rotationAngle;
-            break;
         case 'e':
-            rotationAngle = (-1 / (GLfloat)width) * 2 * M_PI;
-            rotateVector(cam.lookat.x, cam.lookat.y, cam.lookat.z, rotationAngle);
-            printf("xAt: %.2f, zAt: %.2f\n", cam.lookat.x, cam.lookat.z);
-            angle += rotationAngle;
+        case 'E':
+            keyStatus[(int)('e')] = 1;
             break;
-
+        case 'q':
+        case 'Q':
+            keyStatus[(int)('q')] = 1;
+            break;
         glutPostRedisplay();
     }
 
-    printf("pos: %.2f, %.2f\n", cam.p.z, cam.p.x);
+    printf("pos: %.2f, %.2f\n", cam.pos.z, cam.pos.x);
 }
 
 void keyUp(unsigned char key, int x, int y){
@@ -267,25 +244,57 @@ void keyUp(unsigned char key, int x, int y){
 }
 
 void passiveMotion(int x, int y){
-
-    GLfloat diff = xMouse - x;
+/*
+    GLfloat diff = x - xMouse;
     xMouse = x;
+
     if(abs(diff) > 30){ // avoid sudden camera rotations when mouse enters screen
         return;
     }
     else{
         int width = glutGet(GLUT_WINDOW_WIDTH);
-        GLfloat rotationAngle = (diff / (GLfloat)width) * 2 * M_PI;
-        rotateVector(cam.lookat.x, cam.lookat.y, cam.lookat.z, rotationAngle);
-        printf("xAt: %.2f, zAt: %.2f\n", cam.lookat.x, cam.lookat.z);
-        angle += rotationAngle;
-        //angle = atan2(zAt, xAt) - M_PI / 2;
-        printf("Angle: %.2f, %.2f\n", angle, angle * 180 / M_PI);
+        //angle = (180.0 / (GLfloat)width) * x - 90;
+        //angle += diff * 0.5;
+        //GLfloat rotationAngle = (diff / (GLfloat)width) * 300;
+        //angle += rotationAngle;
+        //printf("Angle: %.2f\n", angle);
 
-    }    
+        int height = glutGet(GLUT_WINDOW_HEIGHT);
+        upangle = (180.0 / (GLfloat)height) * y - 90;
+        printf("UpAngle: %.2f\n", upangle);
+    }    */
+    if (firstMouse){
+        xMouse = x;
+        yMouse = y;
+        firstMouse = 0;
+    }
+  
+    float xoffset = x - xMouse;
+    float yoffset = yMouse - y; 
+    xMouse = x;
+    yMouse = y;
+
+    float sensitivity = 0.1f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    yaw   += xoffset;
+    pitch += yoffset;
+
+    if(pitch > 89.0f)
+        pitch = 89.0f;
+    if(pitch < -89.0f)
+        pitch = -89.0f;
+        
+    Point direction;
+    direction.x = cos(radians(yaw)) * cos(radians(pitch));
+    direction.y = sin(radians(pitch));
+    direction.z = sin(radians(yaw)) * cos(radians(pitch));
+    cam.target = direction.normalize();
 }
 
 void idle(void){
+    //glutWarpPointer(640, 360);
     static GLdouble previous_time = glutGet(GLUT_ELAPSED_TIME);
     GLdouble current_time, time_diff;
     current_time = glutGet(GLUT_ELAPSED_TIME);
@@ -293,21 +302,28 @@ void idle(void){
     previous_time = current_time;
 
     GLfloat inc = INC_KEYIDLE;
+    
     if(keyStatus[(int)('w')]){
-        cam.p.z += inc * cos(angle) * time_diff;
-        cam.p.x += inc * sin(angle) * time_diff;
+        cam.pos += cam.target * time_diff * inc;
     }
     if(keyStatus[(int)('s')]){
-        cam.p.z -= inc * cos(angle) * time_diff;
-        cam.p.x -= inc * sin(angle) * time_diff;
+        cam.pos -= cam.target * time_diff * inc;
+        
     }
     if(keyStatus[(int)('a')]){
-        cam.p.x += inc * cos(angle) * time_diff;
-        cam.p.z -= inc * sin(angle) * time_diff;
+        cam.pos -= (cam.target.cross(cam.up)).normalize() * time_diff * inc;
+        
     }
     if(keyStatus[(int)('d')]){
-        cam.p.x -= inc * cos(angle) * time_diff;
-        cam.p.z += inc * sin(angle) * time_diff;
+        cam.pos += (cam.target.cross(cam.up)).normalize() * time_diff * inc; 
+    }
+    cam.pos.y = 2;
+    
+    if(keyStatus[(int)('q')]){
+        angle -= 20 * inc * time_diff;
+    }
+    if(keyStatus[(int)('e')]){
+        angle += 20 * inc * time_diff;
     }
     glutPostRedisplay();
 }
@@ -317,7 +333,7 @@ void idle(void){
 int main(int argc, char** argv) {
    glutInit(&argc, argv);            // Initialize GLUT
    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE); // Enable double buffered mode
-   glutInitWindowSize(640, 480);   // Set the window's initial width & height
+   glutInitWindowSize(1280, 720);   // Set the window's initial width & height
    glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
    glutCreateWindow(title);          // Create window with the given title
    glutDisplayFunc(display);       // Register callback handler for window re-paint event

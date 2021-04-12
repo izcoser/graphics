@@ -6,7 +6,7 @@ TARGET = *
 
 all:
 	$(CXX) $(CFLAGS) -o fps $(TARGET).cpp $(LINKING)
-	./3dtest
+	./fps
 
 clean:
-	$(RM) 3dtest
+	$(RM) fps
