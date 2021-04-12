@@ -9,10 +9,15 @@
 
 #include "camera.h"
 #include "point.h"
+#include "fire.h"
 #include "objloader.h"
+
+#include <list>
 
 #define INC_KEYIDLE 0.01
 #define INC_KEY 1
+
+list<Fire> fires;
 
 mesh tree;
 mesh tree2;
@@ -142,21 +147,7 @@ void drawFloor(){
 
             glVertex3f(-100, 0, i);
             glVertex3f(0, 0, i);
-        }/*
-        glVertex3f(0, 0, 0);
-        glVertex3f(0, 0, 20);
-
-        glVertex3f(4, 0, 0);
-        glVertex3f(4, 0, 20);
-
-        glVertex3f(8, 0, 0);
-        glVertex3f(8, 0, 20);
-
-        glVertex3f(12, 0, 0);
-        glVertex3f(12, 0, 20);
-
-        glVertex3f(16, 0, 0);
-        glVertex3f(16, 0, 20);*/
+        }
     glEnd();
 }
 
@@ -232,6 +223,15 @@ void display() {
     //bullet.draw();
     glPopMatrix();
 
+    for(const auto& fire : fires){
+        if(fire.valid){
+            glPushMatrix();
+            glTranslatef(fire.pos.x, fire.pos.y, fire.pos.z);
+            glutSolidSphere(0.1, 10, 20);
+            glPopMatrix();
+        }
+    }
+
     drawAim(6);
 
     glutSwapBuffers();
@@ -290,6 +290,10 @@ void keyboard(unsigned char key, int x, int y){
             break;
         case '1':
             mouseAim = !mouseAim;
+            break;
+        case ' ':
+            fires.push_back(Fire(cam.pos, cam.target));
+            break;
         glutPostRedisplay();
     }
 
@@ -379,6 +383,14 @@ void idle(void){
         pitch -= 20 * inc * time_diff;
         cam.target = getNewDirection(yaw, pitch);
     }
+
+    for(auto& fire : fires){
+        if(fire.valid){
+            fire.move(time_diff);
+        }
+    }
+    fires.remove_if([](Fire a){return !a.valid;});
+
     glutPostRedisplay();
 }
 
