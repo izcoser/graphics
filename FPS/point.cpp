@@ -49,6 +49,11 @@ Point& Point::operator-=(const Point& b){
 Point Point::operator*(const GLdouble& t){
     return Point(x * t, y * t, z * t);
 }
+
+int Point::isClose(Point b, GLfloat delta){
+    return this->distance(b) <= delta && x != b.x && z != b.z;
+}
+
 /*
 //Funcao auxiliar para fazer o produto vetorial entre dois vetores a x b = out
 void cross(float a[3], float b[3], float out[3])

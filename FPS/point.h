@@ -23,6 +23,7 @@ class Point{
         Point operator-(const Point& b);
         Point& operator-=(const Point& b);
         Point operator*(const GLdouble& t);
+        int isClose(Point b, GLfloat delta);
 
         //Point rotate(GLfloat angle); /* Angle in degrees. */
 };

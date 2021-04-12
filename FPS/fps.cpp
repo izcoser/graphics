@@ -11,6 +11,7 @@
 #include "point.h"
 #include "fire.h"
 #include "objloader.h"
+#include "enemy.h"
 
 #include <list>
 
@@ -18,14 +19,15 @@
 #define INC_KEY 1
 
 list<Fire> fires;
+list<Enemy> enemies;
 
-mesh tree;
-mesh tree2;
-mesh lowtree;
-mesh house;
-mesh bullet;
-mesh girl;
- 
+Mesh tree;
+Mesh tree2;
+Mesh lowtree;
+Mesh house;
+Mesh bullet;
+Mesh girl;
+
 /* Global variables */
 char title[] = "Walking around with FPS-like controls";
 GLfloat anglePyramid = 0.0f;  // Rotational angle for pyramid [NEW]
@@ -37,7 +39,7 @@ Point cube(1.5f, 0.0f, -7.0f);
 
 int keyStatus[256] = {0};
 
-Camera cam(Point(0.0f, 2.0f, 0.0f), Point(0.0f, 0.0f, -1.0f), Point(0.0f, 1.0f, 0.0f));
+Camera cam(Point(-10.0f, 2.0f, 0.0f), Point(0.0f, 0.0f, -1.0f), Point(0.0f, 1.0f, 0.0f));
 
 GLfloat xMouse = 0;
 GLfloat yMouse = 0;
@@ -120,6 +122,12 @@ void initGL() {
     lowtree.loadMesh("lowtree.obj");
     house.loadMesh("House.obj");
     girl.loadMesh("anime.obj");
+
+    enemies.push_back(Enemy(Point(0, 0, 0), girl));
+    enemies.push_back(Enemy(Point(20, 0, 20), girl));
+    enemies.push_back(Enemy(Point(-20, 0, -20), girl));
+    enemies.push_back(Enemy(Point(15, 0, 35), girl));
+    enemies.push_back(Enemy(Point(-15, 0, -35), girl));
     //bullet.loadMesh("bullet.obj");
 }
 
@@ -232,6 +240,9 @@ void display() {
         }
     }
 
+    for(auto& e : enemies){
+        e.draw();
+    }
     drawAim(6);
 
     glutSwapBuffers();
@@ -390,6 +401,10 @@ void idle(void){
         }
     }
     fires.remove_if([](Fire a){return !a.valid;});
+
+    for(auto& e : enemies){
+        e.moveTowardsPlayer(cam.pos, time_diff, enemies);
+    }
 
     glutPostRedisplay();
 }
