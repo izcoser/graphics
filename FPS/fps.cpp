@@ -49,8 +49,19 @@ GLfloat pitch = 0; // vertical angle
 
 int firstMouse = 1;
 
+int mouseAim = 1;
+
+
 GLfloat radians(GLfloat degrees){
     return degrees * M_PI / 180;
+}
+
+Point getNewDirection(GLfloat yaw, GLfloat pitch){
+    return Point(
+        cos(radians(yaw)) * cos(radians(pitch)),
+        sin(radians(pitch)),
+        sin(radians(yaw)) * cos(radians(pitch))
+    );
 }
 
 // Rotates with an angle around Y.
@@ -64,7 +75,7 @@ void rotateVector(GLfloat &x, GLfloat &y, GLfloat &z, GLfloat angle){
  
 /* Initialize OpenGL Graphics */
 void initGL() {
-    //glutSetCursor(GLUT_CURSOR_NONE);
+    glutSetCursor(GLUT_CURSOR_NONE);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color to black and opaque
     glClearDepth(1.0f);                   // Set background depth to farthest
     glEnable(GL_DEPTH_TEST);   // Enable depth testing for z-culling
@@ -233,6 +244,16 @@ void keyboard(unsigned char key, int x, int y){
         case 'Q':
             keyStatus[(int)('q')] = 1;
             break;
+        case 'r':
+        case 'R':
+            keyStatus[(int)('r')] = 1;
+            break;
+        case 'f':
+        case 'F':
+            keyStatus[(int)('f')] = 1;
+            break;
+        case '1':
+            mouseAim = !mouseAim;
         glutPostRedisplay();
     }
 
@@ -245,6 +266,11 @@ void keyUp(unsigned char key, int x, int y){
 }
 
 void passiveMotion(int x, int y){
+    
+    if(!mouseAim){
+        return;
+    }
+    
     if (firstMouse){
         xMouse = x;
         yMouse = y;
@@ -268,15 +294,11 @@ void passiveMotion(int x, int y){
     if(pitch < -89.0f)
         pitch = -89.0f;
         
-    Point direction;
-    direction.x = cos(radians(yaw)) * cos(radians(pitch));
-    direction.y = sin(radians(pitch));
-    direction.z = sin(radians(yaw)) * cos(radians(pitch));
+    Point direction = getNewDirection(yaw, pitch);
     cam.target = direction.normalize();
 
     if(x < 100 || y < 100 || x > glutGet(GLUT_WINDOW_WIDTH) - 100 || y > glutGet(GLUT_WINDOW_HEIGHT) - 100){
-        xMouse = glutGet(GLUT_WINDOW_WIDTH) / 2;
-        yMouse = glutGet(GLUT_WINDOW_HEIGHT) / 2;
+        firstMouse = 1;
         glutWarpPointer(glutGet(GLUT_WINDOW_WIDTH) / 2, glutGet(GLUT_WINDOW_HEIGHT) / 2);
     }
 }
@@ -307,10 +329,20 @@ void idle(void){
     cam.pos.y = 2;
     
     if(keyStatus[(int)('q')]){
-        angle -= 20 * inc * time_diff;
+        yaw -= 20 * inc * time_diff;
+        cam.target = getNewDirection(yaw, pitch);
     }
     if(keyStatus[(int)('e')]){
-        angle += 20 * inc * time_diff;
+        yaw += 20 * inc * time_diff;
+        cam.target = getNewDirection(yaw, pitch);
+    }
+    if(keyStatus[(int)('r')]){
+        pitch += 20 * inc * time_diff;
+        cam.target = getNewDirection(yaw, pitch);
+    }
+    if(keyStatus[(int)('f')]){
+        pitch -= 20 * inc * time_diff;
+        cam.target = getNewDirection(yaw, pitch);
     }
     glutPostRedisplay();
 }
