@@ -61,7 +61,7 @@ Point getNewDirection(GLfloat yaw, GLfloat pitch){
         cos(radians(yaw)) * cos(radians(pitch)),
         sin(radians(pitch)),
         sin(radians(yaw)) * cos(radians(pitch))
-    );
+    ).normalize();
 }
 
 // Rotates with an angle around Y.
@@ -118,7 +118,7 @@ void initGL() {
     //bullet.loadMesh("bullet.obj");
 }
 
-void DrawObj(double size)
+void drawObj(double size)
 {   
     GLfloat materialEmission[] = { 0.00, 0.00, 0.00, 1.0};
     GLfloat materialColor[] = { 1.0, 1.0, 1.0, 1.0};
@@ -134,7 +134,7 @@ void DrawObj(double size)
     //glutSolidSphere(size, 20, 10);
 }
 
-void DrawFloor(){
+void drawFloor(){
     glBegin(GL_LINES);
         for(int i = -100; i < 100; i += 4){
             glVertex3f(i, 0, 0);
@@ -160,6 +160,44 @@ void DrawFloor(){
     glEnd();
 }
 
+void drawAim(void){
+    /*https://stackoverflow.com/questions/5467218/opengl-2d-hud-over-3d */ 
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0.0, 1280, 720, 0.0, -1.0, 10.0);
+    glMatrixMode(GL_MODELVIEW);
+    //glPushMatrix();        ----Not sure if I need this
+    glLoadIdentity();
+    glDisable(GL_CULL_FACE);
+    /*
+    */
+    glDepthMask(GL_FALSE);  // disable writes to Z-Buffer
+    glDisable(GL_DEPTH_TEST);
+
+    glDisable(GL_LIGHTING);
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glBegin(GL_LINES);
+        glColor3f(1.0f, 1.0f, 1.0);
+        glVertex2f(640, 314);
+        glVertex2f(640, 326);
+
+        glVertex2f(634, 320);
+        glVertex2f(646, 320);
+    glEnd();
+    // Making sure we can render 3d again
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    //glPopMatrix();        ----and this?
+
+    glDepthMask(GL_TRUE);  // disable writes to Z-Buffer
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+}
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear color and depth buffers
     glMatrixMode(GL_MODELVIEW);     // To operate on model-view matrix
@@ -167,18 +205,13 @@ void display() {
     // Render a color-cube consisting of 6 quads with different colors
     glLoadIdentity();                 // Reset the model-view matrix
 
-
-    //glRotatef(upangle, 1, 0, 0);
-    //glRotatef(angle, 0, 1, 0);
     gluLookAt(cam.pos.x, cam.pos.y, cam.pos.z, cam.target.x + cam.pos.x, cam.target.y + cam.pos.y, cam.target.z + cam.pos.z, cam.up.x, cam.up.y, cam.up.z);
-    //girl.draw();
 
     glutSolidSphere(0.5, 20, 10);
-    DrawFloor();
+    drawFloor();
 
     glPushMatrix();
     glTranslatef(0, 0, -5);
-    //DrawObj(1);
     //glutSolidSphere(0.5, 20, 10);
     tree.draw();
     glTranslatef(-5, 0, 0);
@@ -196,7 +229,7 @@ void display() {
     //bullet.draw();
     glPopMatrix();
 
-
+    drawAim();
 
     glutSwapBuffers();
 }
@@ -270,7 +303,7 @@ void passiveMotion(int x, int y){
     if(!mouseAim){
         return;
     }
-    
+
     if (firstMouse){
         xMouse = x;
         yMouse = y;
@@ -294,8 +327,7 @@ void passiveMotion(int x, int y){
     if(pitch < -89.0f)
         pitch = -89.0f;
         
-    Point direction = getNewDirection(yaw, pitch);
-    cam.target = direction.normalize();
+    cam.target = getNewDirection(yaw, pitch);
 
     if(x < 100 || y < 100 || x > glutGet(GLUT_WINDOW_WIDTH) - 100 || y > glutGet(GLUT_WINDOW_HEIGHT) - 100){
         firstMouse = 1;
